@@ -1,0 +1,16 @@
+{
+ "A": {
+  "n": 200,
+  "pearson_r": 0.9917402791195132,
+  "mean_abs_diff": 0.8308789991681182,
+  "identical_share": 0.0,
+  "verdict_agreement": 0.98
+ },
+ "E": {
+  "n": 200,
+  "pearson_r": 0.8434169895739929,
+  "mean_abs_diff": 4.215,
+  "identical_share": 0.585,
+  "verdict_agreement": 0.995
+ }
+}

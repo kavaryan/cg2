@@ -1,0 +1,7 @@
+# Direct dependencies from the existing Python 3.13 research environment.
+httpx==0.28.1
+matplotlib==3.11.2
+numpy==2.5.4
+pandas==3.1.1
+scipy==1.18.1
+statsmodels==0.15.0

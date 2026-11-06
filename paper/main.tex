@@ -1,0 +1,399 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage[scaled=0.90]{helvet}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{array,booktabs,tabularx,multirow,threeparttable}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{positioning,calc}
+\usepackage{fancyvrb}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{enumitem}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{subcaption}
+\usepackage[authoryear,round]{natbib}
+\usepackage[colorlinks=true,linkcolor=MidnightBlue,citecolor=MidnightBlue,urlcolor=MidnightBlue]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+\hypersetup{pdftitle={Verdict Games and a Strategic View of the Turing Test},pdfauthor={Kaveh Aryan}}
+\setlist{nosep,leftmargin=1.4em}
+\setlength{\parskip}{0.25em}
+
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+\newtheorem{example}{Example}
+
+\newcommand{\Cont}{\bot}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\G}{\mathsf{G}}
+\newcommand{\I}{\mathsf{I}}
+\newcommand{\adv}{\textsf{adv}}
+\newcommand{\mini}{\textsf{min}}
+\newcommand{\rnd}{\textsf{random}}
+\newcommand{\intro}{\textsf{introspect}}
+\newcommand{\look}{\textsf{lookahead}}
+\input{macros.tex}
+
+\title{\textbf{Verdict Games and a Strategic View of the Turing Test}}
+\author{Kaveh Aryan\\King's College London\\\texttt{kaveh.aryan@kcl.ac.uk}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+\emph{Verdict games} model dialogues in which two speakers seek to influence a non-strategic judge that may end
+the exchange with a binary decision. We define their information structure and payoffs, and establish conditions
+under which stopped verdicts can be reconstructed from complete transcripts with the speakers' policies and internal
+scoring models held fixed. We study these games using LLM prosecutors, defendants and judges in synthetic criminal
+cases. A first experiment crosses prosecutor objectives, question-selection rules, defence rules and defendant types
+across 48 cases, \SoneNgames{} games and six evaluators. Paired guilty and innocent versions of each case have identical
+court evidence and different defendant briefs. A second experiment evaluates eight candidate questions at each sampled dialogue
+state, using two continuations per question and defendant type. \AbstractFindings{}
+\end{abstract}
+
+% =====================================================================================================
+\section{Introduction}
+
+Language is not only a channel for communication but also an instrument of strategy. In a courtroom, the prosecution
+and the defence exchange utterances whose purpose is to move a fact-finder; in an interrogation, the examiner chooses
+questions to elicit statements that an impartial observer will find credible or damning; in a Turing test, a witness
+produces language designed to avoid being classified as a machine \citep{oppy2021}. With large language models (LLMs)
+now judged ``more human than humans'' in some settings \citep{rathi2024,jones2025} and increasingly used both as
+conversational agents and as judges \citep{zheng2023}, the strategic structure of such dialogues has become a practical
+question rather than a philosophical one.
+
+We study \emph{verdict games}, in which two speakers influence a non-strategic judge through a sequence of exchanges.
+The judge may stop after any exchange with one of two verdicts. The speakers can have different objectives: a
+prosecutor may seek conviction regardless of guilt, whereas an examiner may seek a correct classification. These
+objectives need not favour the same questions. A policy that increases convictions may improve discrimination between
+guilty and innocent defendants, persuade the judge irrespective of truth, or exploit a particular evaluator's biases.
+
+The model in \cref{sec:verdict} specifies the speakers' private information, the evidence available to the judge,
+and the relation between verdicts and payoffs. A stopping-rule proposition gives conditions under which fixed
+policies can be evaluated with several judges using the same transcripts. It does not assume that the speakers would
+retain those policies if they were informed of a change in judge.
+
+We investigate strategic question selection in two experiments with LLM prosecutors, defendants and judges.
+Study 1 crosses two prosecutor objectives, three prosecutor selection rules, two defence rules and two defendant
+types across 48 cases (\cref{sec:study1}). The selection rules share a candidate-generation protocol, allowing us
+to compare choosing without evaluation, introspective choice and explicit simulation of a reply. Matched guilty and
+innocent defendants distinguish changes in perceived guilt from changes in discrimination. Study 2 branches each
+sampled dialogue state into all eight proposed questions and runs two continuations per question and defendant type
+(\cref{sec:study2}). It examines the immediate effect of selection, its persistence, and its dependence on the
+planner's internal judge. These experiments estimate effects within the specified simulator; inference to other
+cases, models or human interactions requires additional assumptions (\cref{sec:causal}).
+
+% =====================================================================================================
+\section{Verdict Games}\label{sec:verdict}
+
+\subsection{Definition and examples}
+\begin{definition}[Verdict game]\label{def:verdict}
+A verdict game is a finite-horizon extensive-form game with two speakers, $X$ (the examiner) and $Y$ (the respondent),
+and a non-strategic classifier $C$. Fix a public context $s_0$, finite type spaces $T_X,T_Y$ with common prior
+$\mu(\cdot\mid s_0)$, a finite alphabet $\Sigma$, an utterance-length bound $l$ and a horizon $d$.
+Each speaker observes its own type. At stage $k=1,\dots,d$, $X$ appends an utterance $v_k$ and then $Y$ appends
+$w_k$, with $|v_k|,|w_k|\le l$, producing $h_k=(v_1,w_1,\dots,v_k,w_k)$. The judge observes
+$\omega=(s_0,\pi_C(t_X,t_Y))$ and the transcript, where $\pi_C$ specifies the disclosed private information.
+In the deterministic case, the classifier is
+\begin{equation}
+C:\ \Omega\times H\ \to\ \{0,1,\Cont\}
+\end{equation}
+where $H$ is the set of admissible transcript prefixes and $\Omega$ the space of judge information.
+After each exchange it returns $c_k=C(\omega,h_k)$, where $\Cont$ means ``continue''. The game stops at the first $k\le d$ for which
+$c_k\ne\Cont$, with that verdict as its outcome; if no such stage exists, its outcome is $\Cont$ at $d$.
+Speaker $i$ receives $u_i(t_X,t_Y,c)$. A behavioural strategy maps that speaker's information history to a
+distribution over utterances. Without additional signals these histories are $(t_X,s_0,h_{k-1})$ for $X$ and
+$(t_Y,s_0,h_{k-1},v_k)$ for $Y$. If a policy can query an internal scoring oracle, the permitted queries, the
+oracle's information and its returned scores are also specified as part of the information structure; the strategy
+may condition on those scores. The stopping classifier may be randomised, using exogenous random draws and
+information available at the current stage.
+\end{definition}
+
+The judge may see evidence that one speaker does not. In the experiments, the prosecution and judge receive
+withheld records, while the defendant initially receives only the public file and its private account.
+
+\begin{example}[Court game]
+$X$ is the prosecution, $Y$ the defence, $c=1$ is ``guilty'' and $c=0$ ``not guilty''. Payoffs depend only on the
+verdict: $u_X(1)=1$ and $u_X(0)=u_X(\Cont)=-1$, the last equality expressing the presumption of
+innocence, and $u_Y=-u_X$. The game is zero-sum, although the speakers may hold private information.
+\end{example}
+
+\begin{example}[Interrogation game]\label{ex:interrog}
+$T_Y=\{\G,\I\}$ (guilty, innocent). The examiner is rewarded for a correct decisive verdict and penalised for a wrong one:
+$u_X(\G,1)=u_X(\I,0)=1$, $u_X(\G,0)=u_X(\I,1)=-1$ and $u_X(\cdot,\Cont)=0$; both types of $Y$ seek exoneration:
+$u_Y(t_Y,0)=u_Y(t_Y,\Cont)=1$ and $u_Y(t_Y,1)=-1$. For the examiner this is the usual unweighted classification
+utility; unequal costs of the two classification errors can be represented by different payoffs.
+\end{example}
+
+\begin{example}[Turing test]\label{ex:turing}
+Relabelling $\G,\I$ as \emph{machine}, \emph{human} gives the Turing test as an interrogation game, with $C$ an
+AI-detection procedure that may decide after any exchange. Viewing the test as a game makes two things explicit: the
+witness's best response is to minimise detectability rather than to display intelligence, and the detector's power
+depends on the questions it is shown. Static detectors of machine text \citep{mitchell2023,mireshghallah2024} were not
+built for adversarially produced dialogue; an interactive, strategic interrogator---a Voight-Kampff test---is the
+natural counterpart. The experiments below use this payoff distinction in a criminal-case simulation, with guilt
+in the role of machine identity.
+\end{example}
+
+\input{fig_game.tex}
+
+\subsection{Strategic policies}\label{sec:policies}
+Utterance spaces are astronomically large, so exact equilibrium computation is out of reach. We study instead families
+of policies built around a \emph{generator} $g(\cdot\mid\text{view},h)$, an LLM prompted with the player's objective
+and view of the game. For $K\ge1$, let $V_K=(v^{(1)},\dots,v^{(K)})$ be $K$ candidates proposed by $g$.
+\begin{itemize}
+  \item \textbf{Random}: select a candidate without evaluating its content. The implementation uses a reproducible
+  hash of the generation-request key to choose an index in $V_K$; this is the baseline selection policy.
+  \item \textbf{Introspect}: the same LLM, shown $V_K$ in a randomised order, picks the candidate that ``best serves
+  your goal'', with no explicit simulation.
+  \item \textbf{Lookahead}: a one-step selection heuristic using an internal respondent model and a surrogate
+  score from a model of the judge. Let $\hat Y_t$ simulate a type-$t$ respondent using the public file and transcript,
+  without the actual defendant's private brief or undisclosed evidence. With
+  $\hat p(\cdot)\in[0,1]$ the internal judge's guilt score and fixed weights $\hat\mu(\G)=\hat\mu(\I)=1/2$,
+  \begin{equation}\label{eq:lookahead}
+  v^\star\in\arg\max_{v\in V_K}\ \sum_{t\in T_Y}\hat\mu(t)\ \E_{w\sim\hat Y_t(\cdot\mid h,v)}\Big[\tilde u_X\big(t,\hat p(\omega,h\,v\,w)\big)\Big],
+  \end{equation}
+  where $\tilde u_X(t,p)=p$ for the court (advocate) objective and $\tilde u_X(\G,p)=p$, $\tilde u_X(\I,p)=1-p$ for
+  the interrogation (minister-of-justice) objective. The respondent's lookahead chooses
+  $w^\star\in\arg\min_{w\in W_K}\hat p(\omega,h\,v\,w)$.
+\end{itemize}
+The expectation in \cref{eq:lookahead} is approximated by one simulated reply per type. The fixed type weights
+are not updated from the transcript, and the next-stage guilt score is a surrogate for the terminal verdict payoff.
+Thus the rule is not an exact Bayesian best response in the verdict game. Candidate generation is held fixed
+within an objective, but introspection and lookahead use additional model calls; total inference cost is not matched.
+
+\subsection{Evaluating judges on fixed transcripts}
+The evaluation judge does not generate either player's utterances. This permits the simulation to finish a dialogue
+and subsequently determine where a given judge would have stopped it, subject to the following invariance condition.
+
+\begin{proposition}[Reconstruction of stopped outcomes]\label{prop:decouple}
+Fix the context, type distribution and policy kernels at every history, including any internal judge used for
+planning. Suppose these kernels are the same whether play is stopped by $C$ or continued to $d$: players receive
+no outputs from the external stopping evaluation or stopping-regime indicator, and their policies are not adapted
+to a replacement evaluator.
+Let $\tilde h_d$ be a dialogue generated by these policies without stopping. Apply the non-anticipating classifier
+$C$ to successive prefixes and return its first decisive verdict, or $\Cont$ if none occurs by $d$; denote this
+operation by $\Phi_C(\omega,\tilde h_d)$. For a randomised classifier, preserve the joint response law of
+internal scoring and external evaluation, including any shared randomness. Then $\Phi_C$ has the same distribution as the outcome of the stopped
+game under the fixed policies and $C$.
+\end{proposition}
+\begin{proof}
+Couple the two executions using the same types, internal-oracle responses, utterance draws and classifier draws.
+Their initial histories agree.
+If they agree through stage $k-1$ and the stopped game remains active, the invariant policy kernels produce the same
+two utterances at stage $k$. The classifier then receives the same prefix and, with the coupled draw, returns the
+same output. Induction gives identical prefixes through the first decisive verdict, so both procedures stop at the
+same stage with the same outcome. If neither has a decisive verdict, both return $\Cont$ at $d$.
+\end{proof}
+
+\begin{corollary}
+For a fixed pair of policies satisfying the proposition, several classifiers can be evaluated on the same complete
+transcripts. Each gives the stopped-outcome distribution for that evaluator with the policies held fixed. This
+comparison does not describe how players would adapt to a new judge or an equilibrium under that judge.
+\end{corollary}
+\noindent For example, if a judge first returns a decisive verdict at round~2, later rounds are discarded when
+computing that judge's verdict-game outcome. Its probability of guilt at round~4 is a different quantity: an
+assessment under forced continuation, which is the primary Study-1 outcome. Hidden outputs alone are insufficient
+if players change their behaviour because they know the judge or infer information from survival; the proposition
+requires the policy kernels to remain fixed. Our simulation uses fixed prompts and supplies neither judge feedback
+nor a separate survival signal. A stochastic judge still introduces evaluation uncertainty.
+
+\subsection{Equilibrium and meta-games}
+Bounded utterances and a finite horizon give a finite dialogue tree. Even when court-game
+payoffs do not depend on guilt, private evidence and briefs can create imperfect information; ordinary backward
+induction therefore does not generally apply. Bayesian or sequential equilibrium concepts account for these
+information sets \citep{tadelis2013}. We instead use empirical game-theoretic analysis \citep{wellman2006},
+restricting each player to the tested policies. The reported zero-sum meta-game uses mean final probability of guilt
+as its payoff surrogate, rather than the first decisive verdict. Its equilibrium describes the estimated policy
+matrix, not an equilibrium of the unrestricted verdict game.
+
+% =====================================================================================================
+\section{Experimental Design and Statistical Analysis}\label{sec:causal}
+
+\paragraph{Units and interventions.}
+A case $c$ consists of a public file, withheld evidence and two private briefs. A policy profile
+$z=(o,a,b)$ specifies the prosecutor's objective $o\in\{\adv,\mini\}$, its selection rule
+$a\in\{\rnd,\intro,\look\}$ and the defence rule $b\in\{\rnd,\look\}$. Defendant type
+$t\in\{\G,\I\}$ is a within-case factor: the court file is identical and only the private brief changes.
+Let $Y^e_c(z,t)$ be evaluator $e$'s guilt score after $d$ rounds of forced continuation under $(z,t)$, and
+$\mu^e_c(z,t)=\E[Y^e_c(z,t)\mid c]$. The expectation includes randomness in generation, selection and evaluation.
+This fixed-horizon score is distinct from the first-decisive-verdict outcome reconstructed by
+\cref{prop:decouple}.
+
+\paragraph{Policy effects.}
+For two profiles, define the case-specific contrast
+\begin{equation}
+\tau^e_c(z,z')=\tfrac12\sum_{t\in\{\G,\I\}}\bigl[\mu^e_c(z,t)-\mu^e_c(z',t)\bigr],
+\qquad
+\tau^e_{\mathcal C}(z,z')=\frac1n\sum_{c\in\mathcal C}\tau^e_c(z,z'),
+\end{equation}
+where $\mathcal C$ is the analysed case bank. The \emph{strategic advantage} compares
+$(\adv,\look,b)$ with $(\adv,\rnd,b)$ and averages over defence rules $b$. Discrimination is
+$\Delta^e_{\mathcal C}(z)=n^{-1}\sum_c[\mu^e_c(z,\G)-\mu^e_c(z,\I)]$.
+We also report paired AUC: within each case and defendant type, scores are first averaged over the factors not
+specified in the comparison; we then count the proportion of cases with a higher guilty than innocent mean,
+with ties counting as one half. This quantity depends on the averaging and coupling of the underlying runs.
+An increase in perceived guilt for both types need not improve discrimination. The \emph{transfer gap} compares a
+policy contrast under the planner's internal judge with the same contrast under held-out evaluators.
+
+\paragraph{Identification within the simulator.}
+Copies of a case can be run under each policy profile, providing samples from each intervention's outcome
+distribution \citep{holland1986,imbens2015}. The causal interpretation requires well-specified interventions,
+stable response laws, and no effect of another case's treatment on the outcome distribution of the current case.
+These are the consistency and no-interference requirements commonly grouped under SUTVA; stateless prompts support
+them but do not establish them for a hosted service with shared routing, caches and resource limits. Complete
+crossing provides observations for every Study-1 cell, so comparisons need no extrapolation across unobserved
+policy profiles. Missing or failed runs require separate consideration: a stated exclusion rule alone does not
+make failures independent of outcomes.
+
+Under these conditions, a within-case contrast $D_c$ of observed scores satisfies
+$\E[D_c\mid c]=\tau^e_c$, and $\hat\tau=n^{-1}\sum_cD_c$ is unbiased for the mean effect over the fixed case bank.
+Sampling every condition does not reveal its expected outcome exactly. Repeated runs reduce Monte Carlo uncertainty
+within the simulator; they do not remove uncertainty about the choice of cases, the simulator's assumptions or its
+relevance to human behaviour. For Study 2, the reported averages concern the completed decision points; extending
+those estimates to the three failed points requires an assumption about the failure mechanism.
+
+\paragraph{Case-level inference.}
+A population target $\tau^e_{\mathcal P}=\E_{c\sim\mathcal P}[\tau^e_c]$ additionally requires a sampling model for
+cases. Under such a model, the law of total variance gives
+\begin{equation}
+\operatorname{Var}(D_c)=\operatorname{Var}_c(\tau^e_c)+
+\E_c[\operatorname{Var}(D_c\mid c)].
+\end{equation}
+The second term includes covariance between coupled runs of the same case. Our $t$-intervals and case bootstrap
+use cases as the independent clusters and reflect both observed between-case variation and simulation variation.
+The 48 cases are balanced, generated and audited stimuli, not a probability sample of criminal cases; population
+interpretations of these intervals rely on treating them as exchangeable examples from a comparable synthetic
+case-generation process. More repetitions of a single case cannot establish generality across cases
+\citep{judd2012,westfall2014}. Within-case comparisons cancel an additive common case effect, but not
+case-by-treatment interactions or every possible benefit of covariate adjustment.
+
+\paragraph{Shared draws and service variation.}
+Models, prompts, decoding parameters and selection rules specify the intended interventions. A shared cache reuses
+responses for matching requests and sample indices, coupling some draws across conditions. For two scores $A,B$,
+$\operatorname{Var}(A-B)=\operatorname{Var}(A)+\operatorname{Var}(B)-2\operatorname{Cov}(A,B)$: common random
+numbers reduce contrast variance when the induced covariance is positive \citep{law2015}. Reuse alone does not
+guarantee that sign. Concurrent duplicate requests were not deduplicated, and only \CRNShare\% of the
+case--objective groups shared identical first-round candidate lists across all their cells. Study 1 randomised game
+launch order to reduce systematic temporal confounding. Different call counts, durations and provider fallbacks
+can nevertheless produce condition-dependent service histories; randomised launch order does not guarantee
+provider balance. Recorded transcripts and judgements, rather than a fresh replay, define the analysed data.
+
+% =====================================================================================================
+\section{Materials, Agents and Judges}\label{sec:materials}
+
+\paragraph{Cases.} The stimulus bank contains 56 synthetic criminal cases (8 for stimulus validation, 48 for the main experiments), generated from a balanced
+design over 14 charges, 4 settings, 3 levels of designed evidence strength and defendant gender (16 main cases per
+strength level). Following the Strategic Use of Evidence paradigm from interviewing research \citep{hartwig2006}, each
+case has four public evidence items, a vague initial statement, and two \emph{withheld} items: records of the
+defendant's own movements or contacts (card transactions, phone-cell data, entry logs) that the prosecution and the
+judge see but the defendant's answer generator does not initially receive. The withheld facts are true in both worlds. In the guilty world they are part of
+the crime, and the defendant's prepared cover story denies or misstates them; in the innocent world they have ordinary
+reasons that the defendant would readily admit. Innocent defendants also carry an unrelated embarrassing secret, so that
+evasiveness alone is not diagnostic. Cases were audited by an LLM against five criteria (ambiguity of the public evidence,
+withheld facts true in both worlds, cover story contradicted, innocent account consistent, neutral initial statement).
+A first generator (GPT-4.1-mini) failed the audit for most cases, typically by making withheld items forensic proof of
+the crime rather than neutral records, so we discarded its output and regenerated every case with Claude Haiku 5.5
+(with reasoning). Audited by DeepSeek-V4-Flash, \CaseAuditPass{} of 56 cases passed, \CaseRegens{} after one
+regeneration (scores in \cref{app:cases}). In Study 1 the guilty twin was judged
+guiltier than the innocent twin in \PAUCOverall\% of cases. Defendants' names were reassigned from a diverse,
+gender-matched list after the generator repeatedly selected a few names. Names are held constant across a case's
+conditions, although their interaction with a treatment is not separately estimated.
+
+\paragraph{Agents.} All players and the planners' simulators are Qwen3-235B-A22B-Instruct-2507 (fp8, served mainly by
+DeepInfra with logged fallback to other fp8 providers; temperature 1). The prosecutor sees the public file, the withheld evidence and the transcript, and decides whether and
+when to reveal what it holds; the defendant's answer generator sees the public file, its private brief and the transcript. Each round the
+prosecutor's generator proposes $K=4$ questions ($\le$50 words), the defendant's proposes $K=4$ answers (40--80
+words), and the selection rules of \cref{sec:policies} choose among them; utterances are capped at $l=80$ words and
+games last $d=4$ rounds. The lookahead planner scores each candidate question by simulating one hypothetical guilty and
+one hypothetical innocent reply and querying its internal judge on both; the defence's lookahead queries the internal
+judge on each candidate answer. That internal judge receives the full court file, including withheld evidence.
+Consequently the defence selector has access to an evidence-informed scoring oracle even though its answer generator
+does not see the withheld records. Its advantage measures the effect of this implemented selection procedure,
+including that scoring access. The internal scoring model is held fixed when transcripts are evaluated by other
+judges. Prompts are reproduced in \cref{app:prompts}.
+
+\paragraph{Judges.} After every round the judge reads the court's file and the transcript and returns a probability of
+guilt and a verdict label (\textsc{guilty} beyond reasonable doubt, \textsc{not guilty}, or \textsc{continue}), at
+temperature 0. The primary judge, which is also the planner's internal judge in Study~1, is GPT-4o-mini. For GPT-4o-mini and Llama, we request up to 20 token log probabilities at each output position. At the first
+integer-token position, we take the probability-weighted mean of the returned integer tokens in 0--100,
+renormalising their available mass. If that mass is below 0.5 or unavailable, we use the stated probability.
+This \emph{soft} score follows the token-weighting approach of G-Eval \citep{liu2023geval}, but is a truncated-token
+summary, not the mean of the full distribution. It reduces ties relative to the often coarsely rounded stated
+probabilities; it does not establish calibration. Five held-out judges---Llama-3.3-70B (soft),
+Gemini-2.5-Flash-Lite, Claude-Haiku-5.5, DeepSeek-V4-Flash and Mistral-Small-3.2 (stated probabilities)---evaluate the
+same transcripts post hoc (\cref{prop:decouple}). The verdict-game outcome is the first decisive label over rounds
+1--4, with \textsc{continue} at round 4 counting as acquittal.
+
+\paragraph{Implementation.} Calls go through OpenRouter with preferred providers, permitted fallbacks and the serving provider logged per call;
+responses are cached under a hash of their inputs; the run order of games is randomised; and a hard budget guard
+stopped spending at the pre-set limit. All calls, including stimulus validation, cost
+\TotalCost{}~USD (\cref{app:repro}).
+
+% =====================================================================================================
+\section{Stimulus Validation}\label{sec:validation}
+
+An initial experiment used eight validation cases without withheld evidence and crossed all 24 conditions
+(192 games). The estimated guilty--innocent score difference was \PoneTypeEst{} points, while the primary
+judge's probability of guilt rose from \PoneDriftFrom{} before examination to \PoneDriftTo{} after four rounds.
+Thus the initial setup provided little evidence that the dialogue distinguished the two defendant types.
+This motivated cases with verifiable withheld records (\cref{sec:materials}) and longer answers; the initial
+answers had averaged about 23 words.
+
+A second validation experiment used the same eight cases with the revised evidence structure (192 games).
+The guilty--innocent difference was \PtwoTypeEst{}, and the variation of within-case contrasts informed the
+sample-size calculations. The hypotheses and analysis code were then recorded in an internal pre-registration
+before the main runs, according to the timestamp in the accompanying files (\cref{app:prereg};
+\citealp{nosek2018}). These validation observations are analysed separately from the 48 main cases.
+
+\input{sec_study1.tex}
+\input{sec_study2.tex}
+
+% =====================================================================================================
+\section{Related Work}\label{sec:related}
+
+\paragraph{Games over and about language.}
+Classical signalling and cheap-talk games \citep{tadelis2013} model language as a small set of discrete messages;
+game-theoretic pragmatics \citep{goodman2016,jacob2024,hintikka2012} uses games to explain meaning. Hidden-role games
+\citep{carminati2024,reinhardt2020,wang2024werewolf} and Diplomacy \citep{bakhtin2022} combine language with strategy,
+and LLMs' strategic reasoning has been studied directly \citep{gandhi2023,bertolazzi2023}. Verdict games differ in that
+the payoff-relevant outcome is produced by a non-strategic classifier reading the dialogue.
+
+\paragraph{Debate, persuasion and judges.}
+AI-safety debate \citep{irving2018} is a verdict game in which two agents argue before a judge, and recent experiments
+find that debates between more persuasive LLMs can help weaker judges reach truer answers \citep{khan2024}. LLMs are
+also measurably persuasive to humans \citep{salvi2024}. LLM judges have position, verbosity and self-preference biases
+\citep{zheng2023,wang2024fair,panickssery2024}, and optimising against a learned evaluator invites Goodhart effects
+\citep{manheim2018,gao2023}. Our crossover measures how selection gains depend on the evaluator. Strategic classification
+\citep{hardt2015,ghalme2021} studies agents gaming a classifier controlled by a strategic party; here the classifier is
+non-strategic and the strategic interaction is between the speakers.
+
+\paragraph{LLM simulations as experiments.}
+LLMs are increasingly used to simulate human samples and replicate experiments
+\citep{argyle2023,aher2023,horton2023,park2023,ziems2024}. The effects studied here are defined for the simulated agents. Repeating a conversation state under several
+interventions permits comparisons of alternative questions, while the case bank and response models determine
+the scope of those comparisons. Blocking and multiple-comparison procedures address variation within that scope
+\citep{box2005,montgomery2017,kohavi2020}; they do not establish fidelity to human participants.
+
+\paragraph{Turing tests and detection.}
+Recent three-party Turing tests report that LLMs are often judged human \citep{jones2024,jones2025,rathi2024}, and
+zero-shot detectors target non-adversarial machine text \citep{mitchell2023,mireshghallah2024}. The verdict-game view
+treats detection as an interactive, strategic problem with an explicit trade-off between conviction-seeking and
+discrimination, which is precisely what our advocate and minister objectives separate.
+
+\input{sec_discussion.tex}
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\appendix
+\input{appendix.tex}
+
+\end{document}

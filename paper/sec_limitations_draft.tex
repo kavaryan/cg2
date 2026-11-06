@@ -1,0 +1,16 @@
+\paragraph{Limitations.}
+All speakers and judges are LLMs. The estimated effects concern the specified simulator, and transfer to human
+suspects, judges or Turing-test participants remains an empirical question. The 48 main cases were generated and
+audited under one stimulus procedure; the case-level intervals assume a comparable synthetic case population.
+All players use one model, and the policies consider only four or eight candidates with shallow search. The
+additional model calls required by introspection and lookahead are part of the treatment, so the experiments do
+not estimate performance at equal inference cost. The defence selector's access to an evidence-informed judge
+also limits claims about what a defendant could achieve using only its own information.
+
+Judge scores are uncalibrated, differ in scale, and for two models use a truncated-token probability summary.
+Only two continuations per candidate were collected in Study 2. Three decision points failed, and their exclusion
+may affect generalisation beyond completed points. The crossover intervals condition on estimated normalisation
+scales, and equilibrium statements concern an estimated surrogate-payoff matrix. Hosted-model variation,
+provider fallback and incomplete sharing of cached responses add uncertainty that the recorded case-level
+intervals need not capture fully. Finally, the analysis plan was recorded internally rather than deposited in an
+external registry; its hashes establish file identity but do not independently verify the stated timing.

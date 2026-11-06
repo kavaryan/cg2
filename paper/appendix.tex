@@ -1,0 +1,56 @@
+\section{Prompts}\label{app:prompts}
+All prompts are reproduced verbatim from the code (\texttt{cg/game.py}); angle brackets mark inserted content.
+\input{app_prompts.tex}
+
+\section{Case bank and stimulus audit}\label{app:cases}
+Mean audit scores (1--5) over the 56 cases: ambiguity of public evidence \AuditAmbiguity{}, withheld facts true in both
+worlds \AuditWTrueBoth{}, cover story contradicted by withheld evidence \AuditCoverContradicted{}, innocent account
+consistent \AuditInnocentConsistent{}, neutral initial statement \AuditStatementNeutral{}. An earlier auditor
+(Claude-Haiku-5.5 without an explicit rubric for ``true in both worlds'') failed almost every case, including cases that
+satisfy the design; we report this because LLM auditors, like LLM judges, are sensitive to rubric wording. One full
+case, in the view given to the court, followed by both private briefs:
+\input{app_case.tex}
+
+\section{Pre-registration, deviations and robustness}\label{app:prereg}
+The accompanying pre-registration record (\texttt{prereg/prereg.md}) gives 4 November 2026 at 19:50 UTC as
+the freeze time, after the second validation experiment and before the main runs. SHA-256 hashes of the plan, the analysis code (\texttt{analysis/common.py},
+\texttt{analysis/study1.py}, \texttt{analysis/study2.py}), the simulator and the case bank are recorded in
+\texttt{prereg/HASHES.txt}; the plan file begins with \texttt{bd4ec09e}. This is an internal record rather than an entry in an external registry. The hashes can verify the recorded
+file versions, but do not independently establish when they were recorded.
+
+\paragraph{Deviations.} \DeviationsText{}
+
+\paragraph{Robustness of inference.} For every confirmatory contrast we also computed a case-bootstrap interval
+(10,000 resamples) and a sign-flip $p$-value (20,000 draws). The latter is a sensitivity check requiring appropriate
+symmetry of case contrasts under the null; randomising game launch order does not make sign flipping an exact
+treatment-assignment test. These summaries are broadly consistent with the $t$-based results in
+\cref{tab:confirm} (\cref{tab:robust}).
+\begin{table}[ht]\centering\small
+\caption{Confirmatory contrasts: $t$-interval versus case-bootstrap interval and sign-flip $p$-value.}\label{tab:robust}
+\input{tables/robust.tex}
+\end{table}
+
+\clearpage
+\section{Additional results}\label{app:more}
+\Cref{tab:cells} reports all 24 Study-1 conditions, with each row averaging over the 48 main cases.
+Type denotes the defendant's private brief: guilty or innocent.
+\begin{center}
+\begin{minipage}{\linewidth}\centering\small
+\captionsetup{hypcap=false}
+\captionof{table}{Study 1 cell means, primary judge (GPT-4o-mini). Conviction is the verdict-game outcome under the judge's own
+labels; Conv.\ ($\theta$) uses the post hoc threshold rule ($P\ge80$ guilty, $P\le10$ not guilty).}\label{tab:cells}
+\input{tables/s1_cells.tex}
+\end{minipage}
+\end{center}
+
+\section{Reproducibility and cost}\label{app:repro}
+Every model call was made through OpenRouter and logged with its model, serving provider, token counts and cost; the
+\TotalCalls{} logged calls of the whole programme (case generation and audit, stimulus validation, both studies and all judge
+passes) cost \TotalCost{}~USD. The repository contains the case bank, transcripts, judgements, cost ledger and analysis scripts needed to regenerate
+the reported estimates, tables and figures without new API calls. The local response cache, excluded from Git
+because of its size, reuses matching request keys and sample indices. Concurrent duplicate requests sometimes
+produced distinct responses, so the cache alone need not reproduce every recorded trajectory. An audit of the
+main Study-2 data found no identical judge inputs shared between the two evaluation repetitions or between
+planning and evaluation; independent response laws remain an assumption of the selection-value argument.
+The script \texttt{analysis/make\_report.py} generates the numerical macros, tables and figures used by the paper.
+\ProviderText{}

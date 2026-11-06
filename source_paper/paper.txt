@@ -1,0 +1,326 @@
+                                                          Conversation Games and a Strategic View of the Turing Test
+
+                                                                                               Kaveh Aryan
+                                                                                           King’s College London
+                                                                                           kaveh.aryan@kcl.ac.uk
+
+
+
+
+                                                                   Abstract                                 strates the relevance of the proposed concept. The rest of this
+arXiv:2501.18455v1 [cs.AI] 30 Jan 2025
+
+
+
+
+                                                                                                            paper is structured as follows: Sections 2 and 3 introduce the
+                                              Although many game-theoretic models replicate                 notions of conversation games and verdict games, highlight-
+                                              real interactions that often rely on natural language,        ing their significance through various examples. Section 4
+                                              explicit study of games where language is central             discusses our experiments, Section 5 reviews related works,
+                                              to strategic interaction remains limited. This paper          and Section 6 concludes the paper.
+                                              introduces the conversation game, a multi-stage,
+                                              extensive-form game based on linguistic strategic
+                                              interaction. We focus on a subset of the games,               2   Conversation Game
+                                              called verdict games. In a verdict game, two play-            Language is a ubiquitous medium for strategic interactions
+                                              ers alternate to contribute to a conversation, which          in real-world settings, from negotiations and debates to cus-
+                                              is evaluated at each stage by a non-strategic judge           tomer support and collaborative problem-solving. Unlike tra-
+                                              who may render a conclusive binary verdict, or a              ditional games, where moves are tangible actions, conversa-
+                                              decision to continue the dialogue. The game ends              tion games involve contributions to an evolving dialogue. Un-
+                                              once a limit is reached or a verdict is given. We             derstanding these dynamics enables researchers to model and
+                                              show many familiar processes, such as interroga-              predict behaviour in domains like diplomacy, AI-human in-
+                                              tion or a court process fall under this category. We          teractions, and social decision-making.
+                                              also, show that the Turing test is an instance of ver-
+                                              dict game, and discuss the significance of a strate-          Example 1. We begin by highlighting how people use lan-
+                                              gic view of the Turing test in the age of advanced            guage strategically, leveraging nuances, ambiguity, and cal-
+                                              AI deception. We show the practical relevance of              culated phrasing to influence outcomes and manage relation-
+                                              the proposed concepts by simulation experiments,              ships. Whether it is in workplace (“To deliver the best results,
+                                              and show that a strategic agent outperforms a naive           it might be helpful to revisit the timeline?”), friendship (“I’ve
+                                              agent by a high margin.                                       heard journaling can be really helpful.”), or dating (“That
+                                                                                                            new exhibit sounds interesting!”), language is used strategi-
+                                                                                                            cally as tool for navigating social interactions and achieving
+                                         1   Introduction                                                   goals.
+                                         Language functions not only as a channel for communication         Example 2. (Court) One of the most notable examples of a
+                                         but also as a strategic instrument, whether in legal disputes,     conversation game is a courtroom trial. Here, the players are
+                                         everyday conversations, or high-stakes negotiations. How-          the prosecution and the defense, each strategically interact-
+                                         ever, it has as not traditionally been studied this way. In this   ing to achieve their respective goals (conviction or exoner-
+                                         paper, we focus on a class of dialogue-driven interactions that    ation). Although physical or forensic evidence may be pre-
+                                         we call conversation games. Our goal is to provide a formal        sented, the dialogue surrounding these pieces of evidence of-
+                                         framework that captures the strategic essence of these inter-      ten drives the judge or jury’s perception. Each utterance aims
+                                         actions, allowing us to analyse how participants exchange in-      to persuade the fact-finders and shape their interpretation of
+                                         formation and manipulate discourse to achieve specific objec-      the evidence.
+                                         tives. After motivating examples, we introduce a general defi-
+                                         nition of conversation games and then specialize to the subset        Conversation games can involve hidden roles and Bayesian
+                                         of games, called verdict games, in which a conversation leads      reasoning, as the following couple of examples illustrate:
+                                         to an external judgment, such as a court ruling or a verdict       Example 3. (Interrogation) In an interrogation setting, the
+                                         of authenticity, while players have private types and distinct     key players are the interrogator and the suspect. In many
+                                         incentives. We show that the Turing test [Oppy and Dowe,           legal contexts, the ultimate goal is not merely to gather intel-
+                                         2021] is an instance of the verdict game and discuss its strate-   ligence but to do so in a manner admissible and convincing
+                                         gic aspects. Furthermore, our simulation experiments demon-        in court. Consequently, the interrogator must guide the di-
+                                         strate that strategic agents outperform naive ones and Demon-      alogue to elicit information in a form that will be deemed
+credible and legally defensible, while the suspect may strate-
+gically reveal or conceal details to influence legal outcomes.
+Example 4. (Turing test) Another notable example is the                  sf            …
+Turing test [Oppy and Dowe, 2021]. Here, the players are
+a human interrogator and a witness who may be either hu-                                s2
+man or machine. The interrogator updates their beliefs (in a                                                          C(s)=0
+Bayesian fashion) about the witness’s identity based on the                   s1=s0#v0@w0
+responses received. The witness, in turn, strategically pro-                                w0                      C(s)=Cont
+                                                                                                 v0
+duces language that minimises the chances of being identified                       s0#v0             s0
+as .
+   It should be noted that the utility of players is not necessar-                                                              Initial state
+
+ily determined by the conversation itself, but rather by some                                              C(s)=1               Intermediate &
+                                                                                                                                final states
+external effect or outcome of the conversation:                                                                                 A game stage
+
+Example 5. (Psychoanalysis) In a psychoanalysis or cogni-                                                                       Player X’s move
+                                                                                                                                Player Y’s move
+tive behavioral therapy (CBT) session, the therapist and the
+patient engage in a conversation aimed at improving the pa-
+tient’s mental well-being. Although the dialogue is central                        Figure 1: An illustration of the verdict game.
+to the therapeutic process, the eventual measure of success
+lies in the patient’s external life improvements or changes in
+mental health, rather than the conversation itself.                  3     Verdict Games
+                                                                     A verdict game is a conversation game in which players’ utili-
+Example 6. (Teaching) In a classroom setting, a teacher and
+                                                                     ties are determined by the outcome of a binary sequence clas-
+students engage in conversational exchanges. The teacher’s
+                                                                     sifier on the conversation history.
+ultimate objective is effective learning as evidenced by stu-
+dents’ grasp of the material, rather than simply guiding a           3.1      Problem Setup
+smooth dialogue.
+                                                                     The verdict game (Fig. 1) game needs to be general to ac-
+   One can readily identify other examples that are subsumed         commodate different games and player goals. The game
+under the overarching concept of the conversation game, such         involves two players, player X (she/her/her) and player Y
+as diplomacy, bargaining, negotiation, debate, and persua-           (he/his/him). Each player has a type drawn from their re-
+sion. A formal definition of the conversation game is as fol-        spective set, TX for X and TY for Y , which might or might
+low:                                                                 not be revealed to the other. The game starts at state s0 ,
+                                                                     which is a string (possibly empty) from an alphabet Σ. The
+Definition 1. Conversation Game. Formally, a conversation            game is played in multiple stages. Each stage starts with
+game is a multistage, extensive-form game with the following         the X appending a string v ∈ Σ+ with length at most l to
+characteristics:                                                     the current state st , resulting in the string st #v, to which
+  1. Players and roles. There can be multiple players, each          Y adds another string w ∈ Σ+ (|w| ≤ l), resulting to
+     potentially holding a private type.                             st+1 = st #v@w (“#” and “@” are X and Y ’s delimiters,
+                                                                     respectively. In reality, they are replaced by speakers desig-
+  2. Actions as utterances. At each stage, a player’s action is      nators, such as “X: ...”). This string is then fed to a string
+     an utterance, which contributes to the evolving dialogue.       classifier, C : (Σ∗ #Σ+ @Σ+ )+ → {0, 1, Cont}. The clas-
+                                                                     sifier’s outcome, ct = C(st ), determines whether the game
+  3. Information structure. Players may have private infor-          needs to stop (if it is 0 or 1) or continue to the next stage (if it
+     mation about their type or objectives, and they update          is Cont, unless a maximum number of stages, d, is reached).
+     their beliefs based on the content of the conversation.         In practice, Cont represents a case that a conclusive verdict
+  4. Payoffs. The utility of each player is determined by the        cannot be made. In the extended-form formalism, C(st ) de-
+     ultimate outcome, which may be influenced but not fully         termines if a decision node, st , in the game tree is terminal
+     determined by the conversation’s contents.                      or not. To keep the game general, we propose using separate
+                                                                     utility functions, one for each type of the players, in the form
+   In this paper, we primarily focus on a type of conversation       of u : TX × TY × {0, 1, Cont} → R. This determines the
+game illustrated by Examples 2, 3, and 4. These are games            utility of the players in the terminal nodes.
+where players guide the conversation so that a non-strategic         Definition 2. A verdict game, is a conversation game
+judge (or evaluator) can make a binary judgment solely based         parametrised by (TX , TY , Σ, l, d, C, {ui }i∈TX ∪TY ) that is
+on the dialogue’s content. The utility of the players depends        played as described in the beginning of this section.
+on their private types and on the outcome of this external
+judgment. We refer to this subset of conversation games as           Example 7. Court (formal). This is a formalised version of
+verdict games, and they will be formalized in detail in the          Example 2. Players X and Y are the prosecution and the
+following section.                                                   defence, respectively. The classifier is a judge, where the
+verdicts of 0 and 1, represent verdicts of “not guilty” and           al., 2023; Mireshghallah et al., 2024], but their effectiveness
+“guilty”, respectively. As long as the players are concerned,         is limited to texts directly produced by LLMs as they are not
+the true type of the defence (actually guilty or not) is irrele-      designed to detect adversarially manipulated texts designed
+vant. Therefore, both players are of a single types which are         to obscure their machine origins. As deceptive techniques ad-
+omitted from u function for brevity. The utility functions are        vance, it is likely that more sophisticated detection methods
+therefore defined as below. uX (Cont) reflects the doctrine of        will be necessary—methods that strategically interact with
+presumption of innocence.                                             agents to reveal their machine nature, akin to the sequential
+                                                                      and interactive Voight-Kampff Test from the science-fiction
+        uX (0) = −1, uX (1) = 1, uX (Count) = −1                      classic Blade Runner.
+                                                               (1)
+            uY (0) = 1, uY (1) = −1, uY (Cont) = 1
+                                                                      3.2    Considerations and Limitations
+Example 8. Interrogation (formal). This is a formalised
+version of Example 3. Players X and Y are the interroga-              The Verdict game, despite its versatility, is constrained by
+tor and the suspect, respectively. As the suspect could be            several limitations. One major challenge is the enormous
+guilty or non-guilty, tY = {Guilty, Non-Guilty}. At first             branching factor at each step, as it includes all possible ut-
+glance, the classifier might seem to reflect the interrogator’s       terances that could occur, such as topic changes or tangential
+internal judgment about the suspect’s status. However, upon           remarks. A potential workaround is to narrow down the op-
+closer examination, it becomes clear that the relevant judg-          tions to only the most likely and natural utterances for that
+ment for an effective interrogation is that of an impartial ob-       moment. Alternatively, players can adopt high-level strate-
+server—akin to an indifferent judge assessing the interroga-          gies—such as focusing on eliciting contradictions, pressing
+tion’s progression in a courtroom. This perspective is cap-           for details, or establishing inconsistencies—and restrict their
+tured by the non-strategic classifier in our model. Again, the        utterances to those aligned with their chosen strategy.
+verdicts of 0 and 1, represent verdicts of “guilty” and “not             Another limitation arises in cases, e.g., where the inter-
+guilty”, respectively. However, the goal of the interrogator          rogator seeks specific information, such as the name of a per-
+is to establish the suspect’s true type. The respective utility       son or non-binary details, which are harder to model within
+functions are shown in Table 1.                                       the game’s structure. Additionally, the importance of impar-
+                                                                      tial judgment poses a challenge, as the players’ personal judg-
+      Player            tY          c=0      c=1      c = Cont        ments might influence outcomes, for example, in scenarios
+        X            Non-Guilty      1        −1          0           where judges themselves ask questions (true that even here
+        X              Guilty        −1        1          0           the judge’s decision might be judged by a higher-level court
+  Y (Non-Guilty)     Non-Guilty       1       −1          1           or by the public or even the “history”, but we might equally
+    Y (Guilty)         Guilty         1       −1          1           decide not to delve into this complexity) or when a human
+                                                                      suspects that the other side might be a chatbot and it is not
+Table 1: Utility outcomes for players X and Y under different types   easy for them to use AI-detector tools to verify the fact.
+and actions in an interrogation game.
+                                                                      3.3    Equilibria
+   It can be observed that for the interrogator, this is just the
+usual (unweighted) classification cost function, where false          All conversation games, including the verdict game, are fi-
+positives and false negatives are penalised while true pos-           nite, because the number of stages and the length of player
+itives and true negatives are rewarded. Alternative utility           actions are finite. In particular, the court game (Exam-
+functions, that represent various preferences are of course           ple 7) is a complete-information, zero-sum game, in princi-
+possible. The goal of the suspect is to be exoneration, no            ple, solvable by an standard minimax algorithm to a Sub-
+matter what his type is.                                              game Perfect Equilibrium [Tadelis, 2013, Chapter 8]. Ad-
+                                                                      mittedly, the action space is too large to allow for an exhaus-
+Example 9. Turing test (formal). The usual Turing test (Ex-           tive search. Therefore, approaches such as Monte Carlo Tree
+ample 4) is isomorphic to the interrogation example, where            Search [Świechowski et al., 2023] need to be employed to
+the witness types, i.e., “Non-Guilty” and “Guilty” can corre-         approximately solve the game. The interrogation games, e.g.,
+spond to “Human” and “Machine”, respectively. Classifier              Examples 8, 4, are Bayesian [Tadelis, 2013, Chapter 15]. The
+is an AI-detection system, that decides, based on the history         appropriate solution concept is Perfect Bayesian Equilibrium
+of the conversation at each state, whether the witness is Hu-         [Tadelis, 2013, Chapter 16]. Again, the action space is too
+man (0) or Machine (1).                                               large, calling for a surrogate methods, such as Information
+   We conclude this section by putting this approach to the           Set Monte Carlo Tree Search [Cowling et al., 2012]. In the
+Turing test in context. Historically, during the era of ELIZA         next section, we present the results obtained under a severely
+[Weizenbaum, 1966], the Turing Test was viewed primarily              limited branching factor as a proof of concept.
+as a benchmark for intelligence, often involving simple, non-
+strategic interactions. However, the landscape has changed            4     Experiments
+significantly; advanced Large Language Models (LLMs) are
+now sometimes judged as “more human than humans” [Rathi               This section serves as a proof of concept illustration of the
+et al., 2024]. Current statistical and machine learning mod-          ideas proposed in this paper, and we leave a through explo-
+els perform well at detecting AI-generated text [Mitchell et          ration to future work.
+4.1     Court Process                                               are discretised into a limited set of predefined choices. In
+To simulate the court example (Example 7), we used LLM              other domain, such as auctions [Tadelis, 2013, Chapter 13],
+agents [Huang et al., 2024; Xi et al., 2023], to act as prosecu-    the linguistic choices are often irrelevant. This is in contrast
+tion, defence, and judge. To illustrate the efficacy of strategic   with the present work, where the actions as linguistic utter-
+planning, we compared a naive prosecutor with a strategic           ances as such.
+one. While the naive prosecutor selects questions using the         Games over language. Several studies consider games that
+LLM’s default temperature, the strategic prosecutor performs        involve alphabets. Two such works consider games where
+a shallow search to introspect and choose the question most         players add letters to the end of shared word [Rosenfeld,
+likely to convince the judge (Table 2). The results of the ex-      2024; Marcus and Törmä, 2023], with clearly different scope
+periments show that the strategic agent wins %64 of the times,      with the present work. Also, there are game theoretic stud-
+while the naive agent wins %27 of the times. The difference         ies of language-based games, such a general study of hidden-
+is statistically highly significant with a p-value of ≤ 1e − 5.     role games [Carminati et al., 2024], Werewolf (Mafia) [Wang,
+Detail of experiments. LLM: OpenAI GPT-4o [OpenAI,                  2024], and Secret Hitler [Reinhardt, 2020]. However, these
+2024] (gpt-4o-2024-11-20), depth of introspection: 1,               works either abstract away linguistic interactions or specialise
+breadth of introspection: 10, number of experiments for each        to a specific game [Bertolazzi et al., 2023].
+type of prosecutor: 100.                                            Game theoretic linguistics. There is a branch of studies
+                                                                    that studies pragmatics and rational discourse from a game
+    Component         Description                                   theoretic standpoint [Jacob et al., 2024; Goodman and Frank,
+                      Victim: Emily Harper (34, journalist)         2016; Hintikka, 2012]. This is in contrast with the present
+                      Suspect: Ryan Carter (ex-boyfriend)           study, where the goal is to define a game using language.
+    Context (Case
+                      Evidence: fingerprints, torn jacket, text     Strategic classification. Our verdict game involves strate-
+    Details)
+                      messages, being seen by witnesses,            gically taking turns to steer the ongoing conversation toward
+                      signs of struggle in victim’s apartment.      the boundaries of a sequence classifier. This has similari-
+                      Generates a response based on de-             ties with the problem of strategic classification [Hardt et al.,
+                      fault temperature settings, asking sim-       2015; Ghalme et al., 2021; Ghalme et al., 2021], where a
+    Play X                                                          player plays against a classifier (i.e., the party that controls
+    (Prosecutor,      ple and direct questions without lever-
+                      aging psychological or strategic pat-         the classifier): the player strategically games the classifier
+    Naive)                                                          by changing its observable attributes to achieve a desirable
+                      terns.
+                      Introspects using 10 simulated conver-        classification outcome (such as a desirable mortgage deci-
+    Play X                                                          sion), while the party that controls the classifier tries to op-
+    (Prosecutor,      sations to generate the most effective
+                      question.                                     pose such manipulations. This is in contrast with the present
+    Naive)                                                          work, where the classifier is non-strategic.
+                      Represents Ryan Carter (suspect), re-         Turing test and AI detection. One of our motivating ex-
+    Player Y          sponding with plausible denials, eva-         amples is the Turing Test [Oppy and Dowe, 2021]. At the
+    (Defence)         sions, or misleading statements de-           era of large language models, Several studies has shown
+                      signed to conceal guilt.                      significant imporvemnts advanced Large Language Models
+                      Analyzes the conversation history and         (LLMs) are sometimes judged as “more human than hu-
+                      assigns one of three verdicts: Guilty,        mans.” [Rathi et al., 2024]. Current statistical and ma-
+                      Innocent, or Non-conclusive, with an          chine learning models achieve high accuracy in detecting AI-
+    Classifier        emphasis on identifying guilt if vague        generated text [Mitchell et al., 2023; Mireshghallah et al.,
+                      responses occur to the questins regard-       2024], but these methods are primarily effective for texts di-
+                      ing the suspect being seen by wit-            rectly produced by LLMs and are not designed for texts ad-
+                      nesses.                                       versarially manipulated to obscure their machine origins.
+     Table 2: Description of components in the court experiment.
+                                                                    LLM agents. LLM-based agents are AI systems that lever-
+                                                                    age a large language model (LLM) as their core reasoning
+                                                                    engine. A key characteristic of these agents is their ability
+                                                                    to engage in multi-turn interactive conversations [Huang et
+5     Related Work                                                  al., 2024; Xi et al., 2023]. We utilized LLM-based agents,
+This section situates our study within the broader landscape        in our experiments, in dual roles: as players and as judges,
+of game theory, linguistic interactions, and AI-related strate-     each guided by tailored prompts designed for their respective
+gic frameworks.                                                     tasks.
+Classic games modelled after linguistic interactions.
+Many game models in game theory is modelled after games             6   Conclusion and Future Work
+where the language is a medium for actions, e.g., offering a        This paper introduced a formal framework for studying con-
+wage in a signalling game [Tadelis, 2013, Chapter 16], and          versation games, with a focus on their subset, verdict games,
+players engaging in cheap talks [Tadelis, 2013, Chapter 18].        where dialogue influences external judgments. By model-
+However, these are oversimplified models where the actions          ing scenarios such as courtroom trials, interrogations, and the
+Turing test, we showcased how strategic linguistic interac-         Wang, Ruiming Tang, and Enhong Chen. Understanding
+tions shape outcomes. Our analysis of the Turing test revealed      the planning of LLM agents: A survey, February 2024.
+its strategic depth, emphasizing the importance of robust de-       arXiv:2402.02716 [cs].
+tection methods in the era of advanced AI systems.               [Jacob et al., 2024] Athul Jacob, Gabriele Farina, and Jacob
+   Simulation experiments demonstrated the superiority of           Andreas. Regularized Conventions: Equilibrium Compu-
+strategic agents over naive ones, highlighting the practical        tation as a Model of Pragmatic Reasoning. In Kevin Duh,
+relevance of our framework. However, several challenges             Helena Gomez, and Steven Bethard, editors, Proceedings
+remain, such as handling the high branching factor in con-          of the 2024 Conference of the North American Chapter
+versational moves and modeling more complex objectives in           of the Association for Computational Linguistics: Human
+multi-agent settings.                                               Language Technologies (Volume 1: Long Papers), pages
+   Future work will focus on exploring trust dynamics in AI-        2944–2955, Mexico City, Mexico, June 2024. Association
+human interactions and developing advanced interrogation            for Computational Linguistics.
+strategies. We also aim to leverage advanced search methods,
+such as Monte Carlo Tree Search, to approximate equilibria       [Marcus and Törmä, 2023] Pierre Marcus and Ilkka Törmä.
+in more complex conversation games. This framework pro-             WINNING SETS OF REGULAR LANGUAGES: DE-
+vides a foundation for understanding and designing systems          SCRIPTIONAL AND COMPUTATIONAL COMPLEX-
+that navigate strategic linguistic interactions in both human       ITY. Journal of Automata, Languages and Combinatorics,
+and AI-driven contexts.                                             28, 2023.
+                                                                 [Mireshghallah et al., 2024] Niloofar Mireshghallah, Justus
+References                                                          Mattern, Sicun Gao, Reza Shokri, and Taylor Berg-
+[Bertolazzi et al., 2023] Leonardo Bertolazzi, Davide Maz-          Kirkpatrick. Smaller Language Models are Better Zero-
+  zaccara, Filippo Merlo, and Raffaella Bernardi. Chat-             shot Machine-Generated Text Detectors. In Yvette Gra-
+  GPT‘s Information Seeking Strategy: Insights from the             ham and Matthew Purver, editors, Proceedings of the 18th
+  20-Questions Game. In C. Maria Keet, Hung-Yi Lee,                 Conference of the European Chapter of the Association
+  and Sina Zarrieß, editors, Proceedings of the 16th Inter-         for Computational Linguistics (Volume 2: Short Papers),
+  national Natural Language Generation Conference, pages            pages 278–293, St. Julian’s, Malta, March 2024. Associa-
+  153–162, Prague, Czechia, September 2023. Association             tion for Computational Linguistics.
+  for Computational Linguistics.                                 [Mitchell et al., 2023] Eric Mitchell, Yoonho Lee, Alexan-
+[Carminati et al., 2024] Luca Carminati, Brian Hu Zhang,            der Khazatsky, Christopher D. Manning, and Chelsea
+  Gabriele Farina, Nicola Gatti, and Tuomas Sandholm.               Finn. DetectGPT: Zero-Shot Machine-Generated Text De-
+  Hidden-Role Games: Equilibrium Concepts and Compu-                tection using Probability Curvature. In Proceedings of
+  tation, July 2024. arXiv:2308.16017 [cs].                         the 40th International Conference on Machine Learning,
+                                                                    pages 24950–24962. PMLR, July 2023. ISSN: 2640-3498.
+[Cowling et al., 2012] Peter I. Cowling, Edward J. Powley,
+                                                                 [OpenAI, 2024] OpenAI. GPT-4o System Card, October
+  and Daniel Whitehouse. Information Set Monte Carlo Tree
+  Search. IEEE Transactions on Computational Intelligence           2024.
+  and AI in Games, 4(2):120–143, June 2012. Conference           [Oppy and Dowe, 2021] Graham Oppy and David Dowe.
+  Name: IEEE Transactions on Computational Intelligence             The Turing Test. In Edward N. Zalta, editor, The Stanford
+  and AI in Games.                                                  Encyclopedia of Philosophy. Metaphysics Research Lab,
+[Ghalme et al., 2021] Ganesh Ghalme, Vineet Nair, Itay              Stanford University, winter 2021 edition, 2021.
+  Eilat, Inbal Talgam-Cohen, and Nir Rosenfeld. Strate-          [Rathi et al., 2024] Ishika Rathi, Sydney Taylor, Ben-
+  gic Classification in the Dark. In Proceedings of the 38th        jamin K. Bergen, and Cameron R. Jones. GPT-4 is judged
+  International Conference on Machine Learning, pages               more human than humans in displaced and inverted Turing
+  3672–3681. PMLR, July 2021. ISSN: 2640-3498.                      tests, July 2024. arXiv:2407.08853 [cs] version: 1.
+[Goodman and Frank, 2016] Noah D. Goodman and                    [Reinhardt, 2020] Jack Reinhardt. Competing in a Complex
+  Michael C. Frank. Pragmatic Language Interpretation               Hidden Role Game with Information Set Monte Carlo Tree
+  as Probabilistic Inference. Trends in Cognitive Sciences,         Search, May 2020. arXiv:2005.07156 [cs].
+  20(11):818–829, November 2016.                                 [Rosenfeld, 2024] Matthieu Rosenfeld. Ann wins the non-
+[Hardt et al., 2015] Moritz Hardt, Nimrod Megiddo, Chris-           repetitive game over four letters and the erase-repetition
+  tos Papadimitriou, and Mary Wootters. Strategic Classifi-         game over six letters. European Journal of Combinatorics,
+  cation, November 2015. arXiv:1506.06980 [cs].                     118:103924, May 2024.
+[Hintikka, 2012] Jaakko Hintikka. The Game of Language:          [Tadelis, 2013] Steven Tadelis. Game Theory: An Introduc-
+  Studies in Game-Theoretical Semantics and Its Applica-            tion. Princeton University Press, January 2013. Google-
+  tions. Springer Science & Business Media, December                Books-ID: 4OqAaITAWMC.
+  2012. Google-Books-ID: Hr19CAAAQBAJ.                           [Wang, 2024] S. T. Wang. Optimal Strategy in Werewolf
+[Huang et al., 2024] Xu Huang, Weiwen Liu, Xiaolong                 Game: A Game Theoretic Perspective, August 2024.
+  Chen, Xingmei Wang, Hao Wang, Defu Lian, Yasheng                  arXiv:2408.17177 [econ] version: 1.
+[Weizenbaum, 1966] Joseph Weizenbaum. ELIZA—a com-
+  puter program for the study of natural language communi-
+  cation between man and machine. Communications of the
+  ACM, 9(1):36–45, January 1966.
+[Xi et al., 2023] Zhiheng Xi, Wenxiang Chen, Xin Guo,
+  Wei He, Yiwen Ding, Boyang Hong, Ming Zhang, Jun-
+  zhe Wang, Senjie Jin, Enyu Zhou, Rui Zheng, Xiaoran
+  Fan, Xiao Wang, Limao Xiong, Yuhao Zhou, Weiran
+  Wang, Changhao Jiang, Yicheng Zou, Xiangyang Liu,
+  Zhangyue Yin, Shihan Dou, Rongxiang Weng, Wensen
+  Cheng, Qi Zhang, Wenjuan Qin, Yongyan Zheng, Xipeng
+  Qiu, Xuanjing Huang, and Tao Gui. The Rise and Poten-
+  tial of Large Language Model Based Agents: A Survey,
+  September 2023. arXiv:2309.07864 [cs].
+[Świechowski et al., 2023] Maciej Świechowski, Konrad
+   Godlewski, Bartosz Sawicki, and Jacek Mańdziuk. Monte
+   Carlo Tree Search: a review of recent modifications and
+   applications. Artificial Intelligence Review, 56(3):2497–
+   2562, March 2023.
+

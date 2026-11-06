@@ -1,0 +1,35 @@
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  font=\sffamily\scriptsize, >=latex,
+  st/.style={draw=black!45, rounded corners=2pt, minimum height=6mm, minimum width=9mm, fill=white, line width=0.4pt},
+  xm/.style={st, fill=xblue!14, draw=xblue},
+  ym/.style={st, fill=yorange!14, draw=yorange},
+  jm/.style={st, fill=black!6, draw=black!55, minimum width=11mm},
+  view/.style={draw=black!25, rounded corners=2pt, align=left, inner sep=3pt, text width=4.55cm, line width=0.4pt}]
+\definecolor{xblue}{HTML}{2a78d6}\definecolor{yorange}{HTML}{eb6834}
+\node[st] (s0) at (0,0) {$s_0$};
+\node[xm, right=4mm of s0] (v1) {$X{:}\,v_1$};
+\node[ym, right=2mm of v1] (w1) {$Y{:}\,w_1$};
+\node[jm, right=3mm of w1] (c1) {$C(\omega,h_1)$};
+\node[xm, right=6mm of c1] (v2) {$X{:}\,v_2$};
+\node[ym, right=2mm of v2] (w2) {$Y{:}\,w_2$};
+\node[jm, right=3mm of w2] (c2) {$C(\omega,h_2)$};
+\node[right=4mm of c2] (dots) {$\cdots$};
+\node[jm, right=4mm of dots] (cd) {$C(\omega,h_d)$};
+\draw[->, black!55] (s0) -- (v1); \draw[->, black!55] (v1) -- (w1); \draw[->, black!55] (w1) -- (c1);
+\draw[->, black!55] (c1) -- node[above, black!70]{$\bot$} (v2); \draw[->, black!55] (v2) -- (w2); \draw[->, black!55] (w2) -- (c2);
+\draw[->, black!55] (c2) -- node[above, black!70]{$\bot$} (dots); \draw[->, black!55] (dots) -- (cd);
+\draw[->, black!55] (c1.south) -- ++(0,-0.45) node[below, black!70]{0 / 1: stop};
+\draw[->, black!55] (c2.south) -- ++(0,-0.45) node[below, black!70]{0 / 1: stop};
+\draw[->, black!55] (cd.south) -- ++(0,-0.45) node[below, black!70]{0 / 1 / $\bot$};
+\node[view, anchor=north west] (vx) at ($(s0.south west)+(0,-1.35)$) {\textbf{\color{xblue}Prosecutor $X$} sees: public file, withheld evidence $W$ (its private information), transcript. Objective: advocate (court game) or minister (interrogation game).};
+\node[view, anchor=north west] (vy) at ($(vx.north east)+(0.25,0)$) {\textbf{\color{yorange}Defendant $Y$}: answer generator sees public file, private brief and transcript. Lookahead selector queries an internal judge with access to $W$.};
+\node[view, anchor=north west] (vc) at ($(vy.north east)+(0.25,0)$) {\textbf{Evaluation judge $C$} sees: public file, $W$, transcript. Its outputs are hidden. With policies fixed, its stopping verdict can be reconstructed from prefixes (Prop.~\ref{prop:decouple}).};
+\end{tikzpicture}
+\caption{A verdict game with the information structure used in the experiments. Each stage consists of a question
+from $X$ and an answer from $Y$; the classifier then stops the game with a verdict or lets it continue ($\bot$), up to
+$d$ stages. Guilty and innocent versions of a case share the public file and the withheld evidence and differ only in
+$Y$'s private brief.}
+\label{fig:game}
+\end{figure}
